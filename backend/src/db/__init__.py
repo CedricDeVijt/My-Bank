@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
-
 from src.db.base import Base
 
 DATABASE_URL = "sqlite:///./test.db"
@@ -14,6 +13,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
