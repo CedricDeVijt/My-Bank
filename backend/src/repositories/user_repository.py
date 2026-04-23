@@ -10,3 +10,7 @@ def create(db: Session, user_data: dict):
 
 def get_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
+
+
+def get_by_id(db: Session, user_id):
+    return db.query(User).filter(User.id == user_id).first()
