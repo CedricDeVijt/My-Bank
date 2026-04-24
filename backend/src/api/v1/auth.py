@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
+from src.api.dependencies import get_current_user
 from src.core.exceptions import (
     AuthenticationError,
     EmailAlreadyRegisteredError,
     RefreshTokenError,
 )
 from src.db import get_db
-from src.schemas.Token import RefreshTokenRequest, TokenResponse
+from src.db.models import User
+from src.schemas.Token import LogoutRequest, RefreshTokenRequest, TokenResponse
 from src.schemas.User import UserCreate, UserLogin, UserResponse
 from src.services import auth_service
 
@@ -63,3 +65,18 @@ def refresh_token(
         ) from exc
 
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post("/logout")
+def logout_user(
+    paylaod: LogoutRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    try:
+        auth_service.logout(db, current_user.id, paylaod.refresh_token)
+    except RefreshTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
+        ) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

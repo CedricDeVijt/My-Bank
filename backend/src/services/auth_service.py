@@ -120,3 +120,14 @@ def refresh_tokens(db: Session, raw_refresh_token: str) -> tuple[str, str]:
     refresh_token_repository.revoke_token(db, record, now)
     access_token, new_refresh_token = issue_token_pair(db, user, record.family_id)
     return access_token, new_refresh_token
+
+
+def logout(db: Session, user_id: uuid.UUID, raw_refresh_token: str) -> None:
+    record = refresh_token_repository.get_by_hash(db, hash_password(raw_refresh_token))
+
+    if not record or record.user_id != user_id:
+        raise RefreshTokenError("Invalid refresh token")
+
+    if record.revoked_at is None:
+        refresh_token_repository.revoke_token(db, record, datetime.now(UTC))
+        db.commit()

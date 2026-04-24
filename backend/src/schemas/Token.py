@@ -12,3 +12,9 @@ class RefreshTokenRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     refresh_token: str = Field(min_length=16)
+
+
+class LogoutRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    refresh_token: str = Field(min_length=16)
