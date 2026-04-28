@@ -46,7 +46,7 @@ def register_user(db: Session, payload: UserCreate) -> User:
 
 def authenticate_user(db: Session, email: str, password: str) -> User:
     user = user_repository.get_by_email(db, email)
-    if not user or not verify_password(password, user.hash_password):
+    if not user or not verify_password(password, user.hashed_password):
         raise AuthenticationError("Invalid email or password")
     return user
 
