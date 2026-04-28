@@ -54,7 +54,7 @@ def authenticate_user(db: Session, email: str, password: str) -> User:
 def issue_token_pair(
     db: Session, user: User, family_id: uuid.UUID | None = None
 ) -> tuple[str, str]:
-    now = datetime.now(UTC)
+    now = datetime.now(UTC).replace(tzinfo=None)
     family = family_id or uuid.uuid4()
 
     # Create access and refresh token
@@ -107,7 +107,7 @@ def refresh_tokens(db: Session, raw_refresh_token: str) -> tuple[str, str]:
     if not record:
         raise RefreshTokenError("Refresh token reuse detected")
 
-    now = datetime.now(UTC)
+    now = datetime.now(UTC).replace(tzinfo=None)
     if record.expires_at <= now:
         refresh_token_repository.revoke_family(db, record.family_id, now)
         db.commit()
@@ -123,11 +123,13 @@ def refresh_tokens(db: Session, raw_refresh_token: str) -> tuple[str, str]:
 
 
 def logout(db: Session, user_id: uuid.UUID, raw_refresh_token: str) -> None:
-    record = refresh_token_repository.get_by_hash(db, hash_password(raw_refresh_token))
+    record = refresh_token_repository.get_by_hash(db, hash_token(raw_refresh_token))
 
     if not record or record.user_id != user_id:
         raise RefreshTokenError("Invalid refresh token")
 
     if record.revoked_at is None:
-        refresh_token_repository.revoke_token(db, record, datetime.now(UTC))
+        refresh_token_repository.revoke_token(
+            db, record, datetime.now(UTC).replace(tzinfo=None)
+        )
         db.commit()
