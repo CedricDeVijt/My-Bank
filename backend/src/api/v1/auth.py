@@ -33,7 +33,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
-def login_user(credentials: UserLogin, db: Session = Depends(get_db())):
+def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
     # authenticate user
     try:
         user = auth_service.authenticate_user(
