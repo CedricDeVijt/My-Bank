@@ -28,7 +28,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         ) from exc
 
     return UserResponse(
-        user_id=str(created.id), email=created.email, status="pending_verification"
+        first_name=created.first_name, last_name=created.last_name, email=created.email
     )
 
 
@@ -53,7 +53,7 @@ def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
 
 @router.post("/token/refresh", response_model=TokenResponse)
 def refresh_token(
-    payload: RefreshTokenRequest, db: Session = Depends(get_db)
+        payload: RefreshTokenRequest, db: Session = Depends(get_db)
 ) -> TokenResponse:
     try:
         access_token, refresh_token = auth_service.refresh_tokens(

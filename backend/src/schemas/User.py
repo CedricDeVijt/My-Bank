@@ -23,9 +23,9 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    user_id: str
+    first_name: str
+    last_name: str
     email: EmailStr
-    status: str = "active"
 
 
 class UserLogin(BaseModel):
