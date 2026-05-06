@@ -69,12 +69,12 @@ def refresh_token(
 
 @router.post("/logout")
 def logout_user(
-    paylaod: LogoutRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+        payload: LogoutRequest,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
 ) -> Response:
     try:
-        auth_service.logout(db, current_user.id, paylaod.refresh_token)
+        auth_service.logout(db, current_user.id, payload.refresh_token)
     except RefreshTokenError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
