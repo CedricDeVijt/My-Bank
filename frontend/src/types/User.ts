@@ -7,12 +7,19 @@ export interface User {
 export interface UserCreate {
   email: string;
   password: string;
-  fist_name: string;
+  first_name: string;
   last_name: string;
-  date_of_birth: Date;
+  date_of_birth: string;
 }
 
 export interface UserLogin {
   email: string;
   password: string;
 }
+
+export interface UserResponse {
+  user_id: string;
+  email: string;
+  status: string;
+}
+

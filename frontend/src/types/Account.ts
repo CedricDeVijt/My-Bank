@@ -6,10 +6,10 @@ export interface Account {
   currency: string;
   balance_cents: number;
   status: string;
-  created_at: Date;
+  created_at: string;
 }
 
 export interface AccountCreate {
-  type: string;
+  type: "checking" | "savings";
   currency: string;
 }
