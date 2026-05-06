@@ -1,4 +1,6 @@
-from pydantic import Field
+from pathlib import Path
+
+from pydantic import Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,4 +21,13 @@ class Settings(BaseSettings):
     )
 
 
-settings = Settings()
+try:
+    settings = Settings()
+except ValidationError as e:
+    env_file = Path(".env")
+    if not env_file.exists():
+        raise FileNotFoundError(
+            f"Configuration Error: The required '.env' file was not found at {env_file.resolve()}\n\n"
+        ) from e
+    else:
+        raise
