@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 from src.api.dependencies import get_current_user
+from src.core.config import settings
 from src.core.exceptions import (
     AuthenticationError,
     EmailAlreadyRegisteredError,
@@ -13,6 +14,15 @@ from src.schemas.User import UserCreate, UserLogin, UserResponse
 from src.services import auth_service
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+def _build_token_response(access_token: str, refresh_token: str) -> TokenResponse:
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        access_token_expires_in=settings.jwt_access_token_expires_in,
+        refresh_token_expires_in=settings.jwt_refresh_token_expires_in,
+    )
 
 
 @router.post(
@@ -32,8 +42,8 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/login")
-def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
+@router.post("/login", response_model=TokenResponse)
+def login_user(credentials: UserLogin, db: Session = Depends(get_db)) -> TokenResponse:
     # authenticate user
     try:
         user = auth_service.authenticate_user(
@@ -48,7 +58,7 @@ def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
 
     # issue the tokens
     access_token, refresh_token = auth_service.issue_token_pair(db, user)
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    return _build_token_response(access_token, refresh_token)
 
 
 @router.post("/token/refresh", response_model=TokenResponse)
@@ -64,7 +74,7 @@ def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
         ) from exc
 
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    return _build_token_response(access_token, refresh_token)
 
 
 @router.post("/logout")
