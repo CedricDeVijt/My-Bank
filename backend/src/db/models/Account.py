@@ -11,7 +11,7 @@ class Account(Base):
     __tablename__ = "account"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid7
     )
     account_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     iban: Mapped[str] = mapped_column(String(34), unique=True, nullable=False)

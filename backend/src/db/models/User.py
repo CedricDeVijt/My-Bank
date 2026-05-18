@@ -14,7 +14,7 @@ class User(Base):
     __tablename__ = "user"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid7
     )
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     first_name: Mapped[str] = mapped_column(String(255), nullable=False)

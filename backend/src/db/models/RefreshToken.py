@@ -14,7 +14,7 @@ class RefreshToken(Base):
     __tablename__ = "refresh_token"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid7
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("user.id"), nullable=False
