@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from src.api.v1.accounts import router as account_router
 from src.api.v1.auth import router as auth_router
 from src.api.v1.users import router as users_router

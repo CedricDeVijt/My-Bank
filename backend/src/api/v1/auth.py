@@ -63,7 +63,7 @@ def login_user(credentials: UserLogin, db: Session = Depends(get_db)) -> TokenRe
 
 @router.post("/token/refresh", response_model=TokenResponse)
 def refresh_token(
-        payload: RefreshTokenRequest, db: Session = Depends(get_db)
+    payload: RefreshTokenRequest, db: Session = Depends(get_db)
 ) -> TokenResponse:
     try:
         access_token, refresh_token = auth_service.refresh_tokens(
@@ -79,9 +79,9 @@ def refresh_token(
 
 @router.post("/logout")
 def logout_user(
-        payload: LogoutRequest,
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+    payload: LogoutRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> Response:
     try:
         auth_service.logout(db, current_user.id, payload.refresh_token)
