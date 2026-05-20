@@ -50,7 +50,7 @@ export function AuthPanel() {
             }
 
             setMessage("Login successful. Redirecting to your dashboard...");
-            navigate("/home");
+            navigate("/dashboard");
         } catch (caughtError: unknown) {
             const errorMessage =
                 caughtError instanceof ApiError
