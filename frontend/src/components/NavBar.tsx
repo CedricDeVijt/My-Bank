@@ -100,7 +100,7 @@ export function NavBar() {
     clearTokens();
     setCurrentUser(null);
     setMenuOpen(false);
-    navigate("/login");
+    navigate("/");
   };
 
   const profileLabel = currentUser
