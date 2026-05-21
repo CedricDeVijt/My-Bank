@@ -115,7 +115,7 @@ export function NavBar() {
     <nav className="border-b border-white/6 bg-[#071827]/95 text-white backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-8">
         <NavLink
-          to={currentUser ? "/dashboard" : "/home"}
+          to={currentUser ? "/dashboard" : "/"}
           className="text-2xl font-semibold tracking-wide text-white transition hover:text-amber-200"
           style={{
             fontFamily: '"Times New Roman", Times, serif',
