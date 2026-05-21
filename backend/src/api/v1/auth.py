@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 from src.api.dependencies import get_current_user
 from src.core.config import settings
@@ -7,6 +7,7 @@ from src.core.exceptions import (
     EmailAlreadyRegisteredError,
     RefreshTokenError,
 )
+from src.core.idempotency import idempotent
 from src.db import get_db
 from src.db.models import User
 from src.schemas.Token import LogoutRequest, RefreshTokenRequest, TokenResponse
@@ -28,7 +29,8 @@ def _build_token_response(access_token: str, refresh_token: str) -> TokenRespons
 @router.post(
     "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
+@idempotent(ttl_seconds=3600)
+def register_user(user: UserCreate, request: Request, db: Session = Depends(get_db)):
     try:
 
         created = auth_service.register_user(payload=user, db=db)
@@ -43,7 +45,10 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login_user(credentials: UserLogin, db: Session = Depends(get_db)) -> TokenResponse:
+@idempotent(ttl_seconds=3600)
+def login_user(
+    credentials: UserLogin, request: Request, db: Session = Depends(get_db)
+) -> TokenResponse:
     # authenticate user
     try:
         user = auth_service.authenticate_user(
@@ -62,8 +67,11 @@ def login_user(credentials: UserLogin, db: Session = Depends(get_db)) -> TokenRe
 
 
 @router.post("/token/refresh", response_model=TokenResponse)
+@idempotent(ttl_seconds=3600)
 def refresh_token(
-    payload: RefreshTokenRequest, db: Session = Depends(get_db)
+    payload: RefreshTokenRequest,
+    request: Request,
+    db: Session = Depends(get_db),
 ) -> TokenResponse:
     try:
         access_token, refresh_token = auth_service.refresh_tokens(
@@ -78,8 +86,10 @@ def refresh_token(
 
 
 @router.post("/logout")
+@idempotent(ttl_seconds=3600)
 def logout_user(
     payload: LogoutRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Response:

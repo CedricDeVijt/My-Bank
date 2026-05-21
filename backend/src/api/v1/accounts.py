@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 from src.api.dependencies import get_current_user
+from src.core.idempotency import idempotent
 from src.db import get_db
 from src.db.models import User
 from src.schemas.Account import AccountCreate, AccountListResponse, AccountResponse
@@ -33,8 +34,10 @@ def list_accounts(
 
 
 @router.post("", response_model=AccountResponse, status_code=status.HTTP_201_CREATED)
+@idempotent(ttl_seconds=3600)
 def create_account(
     payload: AccountCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> AccountResponse:
