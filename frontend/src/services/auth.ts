@@ -5,93 +5,52 @@ import type {
   UserResponse,
 } from "../types";
 
-import { config } from "../config";
+import { ApiError, requestJson, generateIdempotencyKey } from "./http";
 
-const API_BASE_URL = config.API_BASE_URL;
 const AUTH_CHANGED_EVENT = "my-bank:auth-changed";
 
-class ApiError extends Error {
-  status: number;
+// Store idempotency keys for in-flight requests
+let loginIdempotencyKey: string | null = null;
+let registerIdempotencyKey: string | null = null;
+let refreshTokenIdempotencyKey: string | null = null;
 
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
+export async function loginUser(payload: UserLogin) {
+  // Reuse existing key if request is in flight, otherwise generate new one
+  if (!loginIdempotencyKey) {
+    loginIdempotencyKey = generateIdempotencyKey();
+  }
+
+  try {
+    return await requestJson<TokenResponse | Record<string, unknown>>(
+      "/api/v1/auth/login",
+      {
+        method: "POST",
+        jsonBody: payload,
+        idempotencyKey: loginIdempotencyKey,
+      },
+    );
+  } finally {
+    // Clear the key after request completes
+    loginIdempotencyKey = null;
   }
 }
 
-async function requestJson<T>(
-  path: string,
-  init: RequestInit & { jsonBody?: unknown } = {},
-) {
-  const { jsonBody, headers, ...requestInit } = init;
-  const requestHeaders = new Headers(headers ?? {});
-
-  if (jsonBody !== undefined && !requestHeaders.has("Content-Type")) {
-    requestHeaders.set("Content-Type", "application/json");
+export async function registerUser(payload: UserCreate) {
+  // Reuse existing key if request is in flight, otherwise generate new one
+  if (!registerIdempotencyKey) {
+    registerIdempotencyKey = generateIdempotencyKey();
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...requestInit,
-    headers: requestHeaders,
-    body: jsonBody === undefined ? undefined : JSON.stringify(jsonBody),
-  });
-
-  if (!response.ok) {
-    const fallbackMessage = `${response.status} ${response.statusText}`;
-    const errorText = await response.text();
-
-    if (!errorText) {
-      throw new ApiError(fallbackMessage, response.status);
-    }
-
-    let errorMessage = errorText.trim();
-    try {
-      const errorPayload = JSON.parse(errorText) as {
-        detail?: Array<{ msg?: string }> | string;
-      };
-      if (typeof errorPayload.detail === "string") {
-        errorMessage = errorPayload.detail;
-      } else {
-        const firstMessage = errorPayload.detail?.[0]?.msg;
-        if (firstMessage) {
-          errorMessage = firstMessage;
-        }
-      }
-    } catch {
-      // Keep the raw text if the body is not JSON.
-    }
-
-    throw new ApiError(errorMessage || fallbackMessage, response.status);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  const responseText = await response.text();
-  if (!responseText) {
-    return undefined as T;
-  }
-
-  return JSON.parse(responseText) as T;
-}
-
-export function loginUser(payload: UserLogin) {
-  return requestJson<TokenResponse | Record<string, unknown>>(
-    "/api/v1/auth/login",
-    {
+  try {
+    return await requestJson<UserResponse>("/api/v1/auth/register", {
       method: "POST",
       jsonBody: payload,
-    },
-  );
-}
-
-export function registerUser(payload: UserCreate) {
-  return requestJson<UserResponse>("/api/v1/auth/register", {
-    method: "POST",
-    jsonBody: payload,
-  });
+      idempotencyKey: registerIdempotencyKey,
+    });
+  } finally {
+    // Clear the key after request completes
+    registerIdempotencyKey = null;
+  }
 }
 
 export async function getCurrentUser() {
@@ -145,11 +104,17 @@ export async function validateOrRefreshTokens(): Promise<TokenResponse | null> {
   // Access token expired, try to refresh
   if (!isTokenExpired(tokens.refresh_token_expires_in, tokens.saved_at)) {
     try {
+      // Reuse existing key if request is in flight, otherwise generate new one
+      if (!refreshTokenIdempotencyKey) {
+        refreshTokenIdempotencyKey = generateIdempotencyKey();
+      }
+
       const newTokens = await requestJson<TokenResponse>(
         "/api/v1/auth/refresh",
         {
           method: "POST",
           jsonBody: { refresh_token: tokens.refresh_token },
+          idempotencyKey: refreshTokenIdempotencyKey,
         },
       );
       saveTokens(newTokens);
@@ -158,6 +123,9 @@ export async function validateOrRefreshTokens(): Promise<TokenResponse | null> {
       // Refresh failed, tokens are invalid
       clearTokens();
       return null;
+    } finally {
+      // Clear the key after request completes
+      refreshTokenIdempotencyKey = null;
     }
   }
 
