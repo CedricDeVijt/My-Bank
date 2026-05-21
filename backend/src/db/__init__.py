@@ -4,7 +4,15 @@ from src.core.config import settings
 from src.db.base import Base
 from src.db.models import Account, IdempotencyKey, RefreshToken, User
 
-__all__ = ["Account", "IdempotencyKey", "RefreshToken", "User"]
+__all__ = [
+    "Account",
+    "Base",
+    "IdempotencyKey",
+    "RefreshToken",
+    "User",
+    "get_db",
+    "init_db",
+]
 
 engine = create_engine(settings.database_url, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
