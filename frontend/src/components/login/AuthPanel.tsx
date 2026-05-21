@@ -5,7 +5,6 @@ import { useState } from "react";
 import {
   ApiError,
   isTokenResponse,
-  loadTokens,
   loginUser,
   registerUser,
   saveTokens,
@@ -37,11 +36,7 @@ export function AuthPanel() {
   const [registerForm, setRegisterForm] =
     useState<UserCreate>(initialRegisterForm);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(() =>
-    loadTokens()
-      ? "You already have a saved session. Sign in again to refresh it."
-      : null,
-  );
+  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {

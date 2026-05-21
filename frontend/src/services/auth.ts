@@ -118,8 +118,60 @@ export function isTokenResponse(value: unknown): value is TokenResponse {
   );
 }
 
+export function isTokenExpired(expiresIn: number, savedAt: number): boolean {
+  const now = Date.now();
+  const expirationTime = savedAt + expiresIn * 1000; // convert seconds to ms
+  return now >= expirationTime;
+}
+
+export async function validateOrRefreshTokens(): Promise<TokenResponse | null> {
+  const tokens = loadTokens();
+
+  if (!tokens) {
+    return null;
+  }
+
+  // If no saved_at timestamp, tokens are from an old format - clear them
+  if (!tokens.saved_at) {
+    clearTokens();
+    return null;
+  }
+
+  // Check if access token is still valid
+  if (!isTokenExpired(tokens.access_token_expires_in, tokens.saved_at)) {
+    return tokens; // Access token is still valid
+  }
+
+  // Access token expired, try to refresh
+  if (!isTokenExpired(tokens.refresh_token_expires_in, tokens.saved_at)) {
+    try {
+      const newTokens = await requestJson<TokenResponse>(
+        "/api/v1/auth/refresh",
+        {
+          method: "POST",
+          jsonBody: { refresh_token: tokens.refresh_token },
+        },
+      );
+      saveTokens(newTokens);
+      return newTokens;
+    } catch {
+      // Refresh failed, tokens are invalid
+      clearTokens();
+      return null;
+    }
+  }
+
+  // Both tokens expired
+  clearTokens();
+  return null;
+}
+
 export function saveTokens(tokens: TokenResponse) {
-  localStorage.setItem("my-bank.tokens", JSON.stringify(tokens));
+  const tokensWithTimestamp = {
+    ...tokens,
+    saved_at: Date.now(),
+  };
+  localStorage.setItem("my-bank.tokens", JSON.stringify(tokensWithTimestamp));
   window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
 }
 
