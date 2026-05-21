@@ -112,7 +112,7 @@ export function NavBar() {
   const profileLink = currentUser ? "/dashboard" : "/login";
 
   return (
-    <nav className="border-b border-white/6 bg-slate-950/90 shadow-2xl shadow-slate-950/20 backdrop-blur text-white">
+    <nav className="relative z-50 border-b border-white/6 bg-slate-950/90 shadow-2xl shadow-slate-950/20 backdrop-blur text-white">
       {/* Main nav container: match AuthPanel/HomePage panel look */}
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-8">
         <NavLink
