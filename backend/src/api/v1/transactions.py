@@ -9,6 +9,7 @@ from src.core.exceptions import (
     InvalidAccountStatusError,
     InvalidTransactionError,
     TransactionError,
+    UnauthorizedTransactionError,
 )
 from src.core.idempotency import idempotent
 from src.db import get_db
@@ -47,6 +48,11 @@ def handle_transaction_error(error: Exception) -> HTTPException:
     elif isinstance(error, CurrencyMismatchError):
         return HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        )
+    elif isinstance(error, UnauthorizedTransactionError):
+        return HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=str(error),
         )
     elif isinstance(error, TransactionError):
@@ -88,6 +94,7 @@ def create_transaction(
 
     Raises:
         404: If account not found
+        403: If source account does not belong to authenticated user
         400: If insufficient balance or invalid account status or currency mismatch
         422: If validation fails (same account, zero/negative amount, etc.)
     """
@@ -97,6 +104,7 @@ def create_transaction(
             from_account_id=payload.from_account_id,
             to_account_id=payload.to_account_id,
             amount_cents=payload.amount_cents,
+            actor_user_id=current_user.id,
         )
 
         # Commit the database transaction atomically

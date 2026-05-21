@@ -45,3 +45,9 @@ class CurrencyMismatchError(TransactionError):
     """Raised when accounts have different currencies"""
 
     pass
+
+
+class UnauthorizedTransactionError(TransactionError):
+    """Raised when a user attempts to transfer from an account they do not own"""
+
+    pass

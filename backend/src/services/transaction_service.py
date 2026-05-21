@@ -21,6 +21,7 @@ from src.core.exceptions import (
     InsufficientBalanceError,
     InvalidAccountStatusError,
     InvalidTransactionError,
+    UnauthorizedTransactionError,
 )
 from src.db.models import Account, Transaction
 from src.repositories import account_repository, transaction_repository
@@ -31,6 +32,7 @@ def execute_transfer(
     from_account_id: uuid.UUID,
     to_account_id: uuid.UUID,
     amount_cents: int,
+    actor_user_id: uuid.UUID,
 ) -> Transaction:
     """
     Execute a money transfer between two accounts.
@@ -46,6 +48,7 @@ def execute_transfer(
         from_account_id: UUID of the sending account
         to_account_id: UUID of the receiving account
         amount_cents: Amount to transfer in cents
+        actor_user_id: UUID of the authenticated user initiating the transfer
 
     Returns:
         Transaction: The created transaction record
@@ -56,6 +59,7 @@ def execute_transfer(
         CurrencyMismatchError: If accounts have different currencies
         InsufficientBalanceError: If from_account doesn't have enough balance
         InvalidTransactionError: If transfer amount is invalid
+        UnauthorizedTransactionError: If source account does not belong to actor
     """
 
     # Validation 1: Basic checks
@@ -79,7 +83,13 @@ def execute_transfer(
     if not to_account:
         raise AccountNotFoundError(f"To account {to_account_id} not found")
 
-    # Validation 3: Check account statuses
+    # Validation 3: Enforce source account ownership for authorization
+    if from_account.account_holder_id != actor_user_id:
+        raise UnauthorizedTransactionError(
+            "You are not authorized to transfer from this account"
+        )
+
+    # Validation 4: Check account statuses
     if from_account.status != "active":
         raise InvalidAccountStatusError(
             f"From account is {from_account.status}, only active accounts can send"
@@ -90,13 +100,13 @@ def execute_transfer(
             f"To account is {to_account.status}, only active accounts can receive"
         )
 
-    # Validation 4: Check currencies match
+    # Validation 5: Check currencies match
     if from_account.currency != to_account.currency:
         raise CurrencyMismatchError(
             f"Cannot transfer between {from_account.currency} and {to_account.currency}"
         )
 
-    # Validation 5: Check sufficient balance
+    # Validation 6: Check sufficient balance
     if from_account.balance_cents < amount_cents:
         raise InsufficientBalanceError(
             f"Insufficient balance. Available: {from_account.balance_cents}, "
