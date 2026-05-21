@@ -112,7 +112,8 @@ export function NavBar() {
   const profileLink = currentUser ? "/dashboard" : "/login";
 
   return (
-    <nav className="border-b border-white/6 bg-[#071827]/95 text-white backdrop-blur">
+    <nav className="border-b border-white/6 bg-slate-950/90 shadow-2xl shadow-slate-950/20 backdrop-blur text-white">
+      {/* Main nav container: match AuthPanel/HomePage panel look */}
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-8">
         <NavLink
           to={currentUser ? "/dashboard" : "/"}
@@ -138,7 +139,7 @@ export function NavBar() {
                 {currentUser.first_name.slice(0, 1)}
                 {currentUser.last_name.slice(0, 1)}
               </span>
-              <span>{profileLabel}</span>
+              <span className="max-w-40 truncate">{profileLabel}</span>
               <span
                 className={`text-xs text-slate-400 transition ${menuOpen ? "rotate-180" : ""}`}
               >
@@ -147,7 +148,7 @@ export function NavBar() {
             </button>
 
             {menuOpen ? (
-              <div className="absolute right-0 mt-3 w-56 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/95 p-2 shadow-2xl shadow-black/40 backdrop-blur">
+              <div className="absolute right-0 mt-3 w-56 overflow-hidden rounded-3xl border border-white/10 bg-slate-950/70 p-3 shadow-2xl shadow-slate-950/30 backdrop-blur z-50">
                 <div className="px-3 py-2 text-xs uppercase tracking-[0.2em] text-slate-500">
                   signed in as
                 </div>
@@ -165,14 +166,14 @@ export function NavBar() {
             ) : null}
           </div>
         ) : checkingSession && loadTokens() ? (
-          <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300">
+          <span className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300">
             Loading...
           </span>
         ) : (
           <NavLink
             to={profileLink}
             className={({ isActive }) =>
-              `rounded-full px-4 py-2 text-sm font-medium transition ${
+              `rounded-2xl px-4 py-2 text-sm font-semibold transition ${
                 isActive
                   ? "bg-amber-300 text-slate-950"
                   : "text-slate-200 hover:bg-white/5 hover:text-white"
