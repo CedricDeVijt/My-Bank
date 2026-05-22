@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { NavLink } from "react-router-dom";
 
 import type { Account, AccountCreate } from "../types";
 import { ApiError } from "../services/auth";
@@ -173,21 +174,30 @@ export function DashboardPage() {
               </p>
             </div>
 
-            <div className="rounded-3xl border border-amber-300/15 bg-amber-300/10 px-5 py-4 text-right">
-              <p className="text-xs uppercase tracking-[0.2em] text-amber-200/80">
-                total value
-              </p>
-              <div className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
-                {isLoading
-                  ? "Loading..."
-                  : totalValueLabels.length > 0
-                    ? totalValueLabels.join(" · ")
-                    : "0.00"}
+            <div className="flex items-center gap-3">
+              <div className="rounded-3xl border border-amber-300/15 bg-amber-300/10 px-5 py-4 text-right">
+                <p className="text-xs uppercase tracking-[0.2em] text-amber-200/80">
+                  total value
+                </p>
+                <div className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+                  {isLoading
+                    ? "Loading..."
+                    : totalValueLabels.length > 0
+                      ? totalValueLabels.join(" · ")
+                      : "0.00"}
+                </div>
+                <p className="mt-1 text-sm text-amber-50/70">
+                  Across {accounts.length} account
+                  {accounts.length === 1 ? "" : "s"}
+                </p>
               </div>
-              <p className="mt-1 text-sm text-amber-50/70">
-                Across {accounts.length} account
-                {accounts.length === 1 ? "" : "s"}
-              </p>
+
+              <NavLink
+                to="/transactions/new"
+                className="inline-flex items-center gap-2 rounded-2xl border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-300/20 hover:text-white"
+              >
+                New transfer
+              </NavLink>
             </div>
           </div>
 

@@ -118,10 +118,6 @@ export function NavBar() {
         <NavLink
           to={currentUser ? "/dashboard" : "/"}
           className="text-2xl font-semibold tracking-wide text-white transition hover:text-amber-200"
-          style={{
-            fontFamily: '"Times New Roman", Times, serif',
-            letterSpacing: "0.06em",
-          }}
         >
           My Bank
         </NavLink>
