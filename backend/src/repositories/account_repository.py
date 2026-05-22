@@ -25,7 +25,8 @@ def get_by_account_number(db: Session, account_number: str) -> Account | None:
 
 def get_by_iban(db: Session, iban: str) -> Account | None:
     """Retrieve an account by IBAN"""
-    stmt = select(Account).where(Account.iban == iban)
+    normalized_iban = iban.replace(" ", "").upper()
+    stmt = select(Account).where(Account.iban == normalized_iban)
     return db.scalars(stmt).first()
 
 

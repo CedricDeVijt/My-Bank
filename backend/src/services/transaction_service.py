@@ -29,8 +29,8 @@ from src.repositories import account_repository, transaction_repository
 
 def execute_transfer(
     db: Session,
-    from_account_id: uuid.UUID,
-    to_account_id: uuid.UUID,
+    from_iban: str,
+    to_iban: str,
     amount_cents: int,
     actor_user_id: uuid.UUID,
 ) -> Transaction:
@@ -45,8 +45,8 @@ def execute_transfer(
 
     Args:
         db: SQLAlchemy session
-        from_account_id: UUID of the sending account
-        to_account_id: UUID of the receiving account
+        from_iban: IBAN of the sending account
+        to_iban: IBAN of the receiving account
         amount_cents: Amount to transfer in cents
         actor_user_id: UUID of the authenticated user initiating the transfer
 
@@ -66,22 +66,34 @@ def execute_transfer(
     if amount_cents <= 0:
         raise InvalidTransactionError("Transfer amount must be greater than 0")
 
-    if from_account_id == to_account_id:
-        raise InvalidTransactionError("Cannot transfer to the same account")
-
     # Validation 2: Retrieve both accounts with pessimistic locking (FOR UPDATE)
     # This locks the rows so no other transaction can modify them until we're done
-    stmt_from = select(Account).where(Account.id == from_account_id).with_for_update()
-    from_account = db.scalars(stmt_from).first()
+    from_account = account_repository.get_by_iban(db, from_iban)
 
     if not from_account:
-        raise AccountNotFoundError(f"From account {from_account_id} not found")
+        raise AccountNotFoundError(f"From account {from_iban} not found")
 
-    stmt_to = select(Account).where(Account.id == to_account_id).with_for_update()
-    to_account = db.scalars(stmt_to).first()
+    from_account = db.scalars(
+        select(Account).where(Account.id == from_account.id).with_for_update()
+    ).first()
+
+    if not from_account:
+        raise AccountNotFoundError(f"From account {from_iban} not found")
+
+    to_account = account_repository.get_by_iban(db, to_iban)
 
     if not to_account:
-        raise AccountNotFoundError(f"To account {to_account_id} not found")
+        raise AccountNotFoundError(f"To account {to_iban} not found")
+
+    to_account = db.scalars(
+        select(Account).where(Account.id == to_account.id).with_for_update()
+    ).first()
+
+    if not to_account:
+        raise AccountNotFoundError(f"To account {to_iban} not found")
+
+    if from_account.id == to_account.id:
+        raise InvalidTransactionError("Cannot transfer to the same account")
 
     # Validation 3: Enforce source account ownership for authorization
     if from_account.account_holder_id != actor_user_id:
@@ -126,8 +138,8 @@ def execute_transfer(
         transaction = transaction_repository.create(
             db=db,
             transaction_data={
-                "from_account_id": from_account_id,
-                "to_account_id": to_account_id,
+                "from_account_id": from_account.id,
+                "to_account_id": to_account.id,
                 "amount_cents": amount_cents,
                 "currency": from_account.currency,
                 "status": "completed",
@@ -166,11 +178,7 @@ def get_account_history(
         AccountNotFoundError: If account doesn't exist
     """
     # Verify account exists
-    account = account_repository.get_by_account_number(db, str(account_id))
-    if not account and account_id:
-        # Fallback to direct check since we might be passing UUID directly
-        stmt = select(Account).where(Account.id == account_id)
-        account = db.scalars(stmt).first()
+    account = account_repository.get_by_id(db, account_id)
 
     if not account:
         # Still not found, but we'll return empty list instead of error

@@ -13,6 +13,7 @@ from src.core.exceptions import (
 )
 from src.core.idempotency import idempotent
 from src.db import get_db
+from src.repositories import account_repository
 from src.schemas.Transaction import (
     TransactionCreateRequest,
     TransactionListResponse,
@@ -101,8 +102,8 @@ def create_transaction(
     try:
         transaction = transaction_service.execute_transfer(
             db=db,
-            from_account_id=payload.from_account_id,
-            to_account_id=payload.to_account_id,
+            from_iban=payload.from_iban,
+            to_iban=payload.to_iban,
             amount_cents=payload.amount_cents,
             actor_user_id=current_user.id,
         )
@@ -134,7 +135,12 @@ def create_transaction(
     "", status_code=status.HTTP_200_OK, response_model=list[TransactionListResponse]
 )
 def list_transactions(
-    account_id: str = Query(None, description="Filter transactions by account ID"),
+    account_id: str | None = Query(
+        None, description="Filter transactions by account ID"
+    ),
+    account_iban: str | None = Query(
+        None, description="Filter transactions by account IBAN"
+    ),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(50, ge=1, le=100, description="Maximum records to return"),
     db: Session = Depends(get_db),
@@ -144,7 +150,8 @@ def list_transactions(
     Get transaction history for an account.
 
     Query Parameters:
-    - account_id: The account to get transactions for (required)
+    - account_id: The account UUID to get transactions for (optional)
+    - account_iban: The account IBAN to get transactions for (optional)
     - skip: Pagination offset (default: 0)
     - limit: Max results per page (default: 50, max: 100)
 
@@ -152,26 +159,35 @@ def list_transactions(
         List of transactions for the specified account
 
     Raises:
-        400: If account_id is not provided
+        400: If neither account_id nor account_iban is provided
         404: If account not found (though we allow zero transactions)
     """
-    if not account_id:
+    if not account_id and not account_iban:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="account_id query parameter is required",
+            detail="account_id or account_iban query parameter is required",
         )
 
     try:
-        import uuid
+        if account_iban:
+            account = account_repository.get_by_iban(db, account_iban)
+            if not account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Account not found",
+                )
+            account_uuid = account.id
+        else:
+            import uuid
 
-        # Parse account_id as UUID
-        try:
-            account_uuid = uuid.UUID(account_id)
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid account_id format",
-            )
+            # Parse account_id as UUID
+            try:
+                account_uuid = uuid.UUID(account_id)
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid account_id format",
+                )
 
         transactions, total = transaction_service.get_account_history(
             db=db,

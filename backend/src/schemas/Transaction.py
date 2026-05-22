@@ -1,29 +1,32 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class TransactionCreateRequest(BaseModel):
     """Request schema for creating a transaction"""
 
-    from_account_id: uuid.UUID = Field(description="ID of the account to transfer from")
-    to_account_id: uuid.UUID = Field(description="ID of the account to transfer to")
+    from_iban: str = Field(description="IBAN of the account to transfer from")
+    to_iban: str = Field(description="IBAN of the account to transfer to")
     amount_cents: int = Field(gt=0, description="Amount in cents (must be positive)")
 
-    @field_validator("from_account_id", "to_account_id")
+    @field_validator("from_iban", "to_iban", mode="before")
     @classmethod
-    def validate_uuids(cls, v):
-        if not v:
-            raise ValueError("Account ID cannot be empty")
-        return v
+    def normalize_iban(cls, v):
+        if not isinstance(v, str):
+            return v
 
-    @field_validator("from_account_id")
-    @classmethod
-    def validate_different_accounts(cls, v, info):
-        if "to_account_id" in info.data and v == info.data["to_account_id"]:
+        normalized = v.replace(" ", "").upper()
+        if not normalized:
+            raise ValueError("IBAN cannot be empty")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_different_accounts(self):
+        if self.from_iban == self.to_iban:
             raise ValueError("Cannot transfer to the same account")
-        return v
+        return self
 
 
 class TransactionResponse(BaseModel):
