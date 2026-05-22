@@ -191,13 +191,6 @@ export function DashboardPage() {
                   {accounts.length === 1 ? "" : "s"}
                 </p>
               </div>
-
-              <NavLink
-                to="/transactions/new"
-                className="inline-flex items-center gap-2 rounded-2xl border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-300/20 hover:text-white"
-              >
-                New transfer
-              </NavLink>
             </div>
           </div>
 
@@ -344,6 +337,14 @@ export function DashboardPage() {
             </div>
           </div>
         ) : null}
+        {/* Floating New Transfer button: fixed bottom-right for consistent placement */}
+        <NavLink
+          to="/transactions/new"
+          aria-label="Create a new transaction"
+          className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-2xl bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300/60"
+        >
+          New transaction
+        </NavLink>
       </section>
     </main>
   );
