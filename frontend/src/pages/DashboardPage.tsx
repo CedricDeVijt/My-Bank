@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 import type { Account, AccountCreate } from "../types";
 import { ApiError } from "../services/auth";
@@ -248,53 +248,57 @@ export function DashboardPage() {
                   </div>
                 ) : accountsForGroup.length > 0 ? (
                   accountsForGroup.map((account) => (
-                    <article
+                    <Link
                       key={account.account_id}
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-amber-300/20 hover:bg-white/10"
+                      to={`/accounts/${account.account_id}`}
+                      className="block w-full rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-amber-300/20 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/60"
+                      aria-label={`View details for account ${account.account_number}`}
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                            {humanizeAccountType(account.type)}
-                          </p>
-                          <p className="mt-2 text-sm text-slate-400">IBAN</p>
-                          <p className="break-all text-base font-medium text-white">
-                            {account.iban}
-                          </p>
+                      <article>
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                              {humanizeAccountType(account.type)}
+                            </p>
+                            <p className="mt-2 text-sm text-slate-400">IBAN</p>
+                            <p className="break-all text-base font-medium text-white">
+                              {account.iban}
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl border border-white/10 bg-slate-950/60 px-3 py-2 text-right">
+                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                              Balance
+                            </p>
+                            <p className="mt-1 text-lg font-semibold text-amber-200">
+                              {formatBalance(
+                                account.balance_cents,
+                                account.currency,
+                              )}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="rounded-2xl border border-white/10 bg-slate-950/60 px-3 py-2 text-right">
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                            Balance
-                          </p>
-                          <p className="mt-1 text-lg font-semibold text-amber-200">
-                            {formatBalance(
-                              account.balance_cents,
-                              account.currency,
-                            )}
-                          </p>
+                        <div className="mt-4 grid gap-3 border-t border-white/10 pt-4 text-sm text-slate-300 sm:grid-cols-2">
+                          <div>
+                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                              Account number
+                            </p>
+                            <p className="mt-1 break-all font-medium text-white">
+                              {account.account_number}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                              Currency
+                            </p>
+                            <p className="mt-1 font-medium text-white">
+                              {account.currency}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-
-                      <div className="mt-4 grid gap-3 border-t border-white/10 pt-4 text-sm text-slate-300 sm:grid-cols-2">
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                            Account number
-                          </p>
-                          <p className="mt-1 break-all font-medium text-white">
-                            {account.account_number}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                            Currency
-                          </p>
-                          <p className="mt-1 font-medium text-white">
-                            {account.currency}
-                          </p>
-                        </div>
-                      </div>
-                    </article>
+                      </article>
+                    </Link>
                   ))
                 ) : (
                   <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-sm text-slate-400">
