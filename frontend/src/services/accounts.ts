@@ -1,6 +1,6 @@
 import { requestJson, ApiError, generateIdempotencyKey } from "./http";
 import type { Account, AccountCreate } from "../types";
-import { loadTokens } from "./auth";
+import { loadTokens, validateOrRefreshTokens } from "./auth";
 
 type AccountListResponse = {
   accounts: Account[];
@@ -10,8 +10,13 @@ type AccountListResponse = {
 let createAccountIdempotencyKey: string | null = null;
 
 export async function listAccounts() {
-  const tokens = loadTokens();
+  // Ensure tokens are valid or refreshed before making the request
+  const refreshed = await validateOrRefreshTokens();
+  if (!refreshed) {
+    throw new ApiError("No active session found.", 401);
+  }
 
+  const tokens = loadTokens();
   if (!tokens?.access_token) {
     throw new ApiError("No active session found.", 401);
   }
@@ -27,6 +32,12 @@ export async function listAccounts() {
 }
 
 export async function createAccount(payload: AccountCreate) {
+  // Ensure tokens are valid or refreshed before making the request
+  const refreshed = await validateOrRefreshTokens();
+  if (!refreshed) {
+    throw new ApiError("No active session found.", 401);
+  }
+
   const tokens = loadTokens();
 
   if (!tokens?.access_token) {

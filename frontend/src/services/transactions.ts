@@ -1,5 +1,5 @@
 import { requestJson, ApiError, generateIdempotencyKey } from "./http";
-import { loadTokens } from "./auth";
+import { loadTokens, validateOrRefreshTokens } from "./auth";
 
 export interface TransactionCreatePayload {
   from_account_id: string;
@@ -22,8 +22,12 @@ export interface TransactionResponse {
 let createTransactionIdempotencyKey: string | null = null;
 
 export async function createTransaction(payload: TransactionCreatePayload) {
-  const tokens = loadTokens();
+  const refreshed = await validateOrRefreshTokens();
+  if (!refreshed) {
+    throw new ApiError("No active session found.", 401);
+  }
 
+  const tokens = loadTokens();
   if (!tokens?.access_token) {
     throw new ApiError("No active session found.", 401);
   }
@@ -51,6 +55,11 @@ export async function listTransactions(
   skip = 0,
   limit = 50,
 ) {
+  const refreshed = await validateOrRefreshTokens();
+  if (!refreshed) {
+    throw new ApiError("No active session found.", 401);
+  }
+
   const tokens = loadTokens();
 
   if (!tokens?.access_token) {

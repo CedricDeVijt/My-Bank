@@ -54,6 +54,12 @@ export async function registerUser(payload: UserCreate) {
 }
 
 export async function getCurrentUser() {
+  // Ensure tokens are valid / refreshed before making the request
+  const refreshed = await validateOrRefreshTokens();
+  if (!refreshed) {
+    throw new ApiError("No active session found.", 401);
+  }
+
   const tokens = loadTokens();
 
   if (!tokens?.access_token) {
