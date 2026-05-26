@@ -16,12 +16,23 @@ export function TransactionPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
   const [fromAccountId, setFromAccountId] = useState<string>("");
-  const [toAccount, setToAccount] = useState<string>("");
+  const [toIban, setToIban] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Ensure we start at the top of the page when this route mounts. This
+  // prevents the dashboard's scroll position from carrying over to the
+  // transaction form when navigating from a scrolled dashboard.
+  useEffect(() => {
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    } catch {
+      // ignore if window isn't available for some reason
+    }
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -65,8 +76,8 @@ export function TransactionPage() {
       setErrorMessage("Please select a source account.");
       return;
     }
-    if (!toAccount.trim()) {
-      setErrorMessage("Please enter the recipient account id or IBAN.");
+    if (!toIban.trim()) {
+      setErrorMessage("Please enter the recipient IBAN.");
       return;
     }
     const cents = centsFromAmountString(amount);
@@ -77,9 +88,15 @@ export function TransactionPage() {
 
     setIsSubmitting(true);
     try {
+      const fromAccount = accounts.find((a) => a.account_id === fromAccountId);
+      if (!fromAccount) {
+        setErrorMessage("Selected source account is no longer available.");
+        return;
+      }
+
       await createTransaction({
-        from_account_id: fromAccountId,
-        to_account_id: toAccount.trim(),
+        from_iban: fromAccount.iban,
+        to_iban: toIban.trim(),
         amount_cents: cents,
       });
       navigate("/dashboard");
@@ -138,13 +155,11 @@ export function TransactionPage() {
           </div>
 
           <div>
-            <label className="block text-xs text-slate-400">
-              To (account id or IBAN)
-            </label>
+            <label className="block text-xs text-slate-400">To IBAN</label>
             <input
               className="mt-2 w-full rounded-xl bg-white/5 px-3 py-2 text-slate-200"
-              value={toAccount}
-              onChange={(e) => setToAccount(e.target.value)}
+              value={toIban}
+              onChange={(e) => setToIban(e.target.value)}
               placeholder="IBAN of destination account"
             />
           </div>

@@ -2,8 +2,8 @@ import { requestJson, ApiError, generateIdempotencyKey } from "./http";
 import { loadTokens, validateOrRefreshTokens } from "./auth";
 
 export interface TransactionCreatePayload {
-  from_account_id: string;
-  to_account_id: string;
+  from_iban: string;
+  to_iban: string;
   amount_cents: number;
 }
 
@@ -51,7 +51,7 @@ export async function createTransaction(payload: TransactionCreatePayload) {
 }
 
 export async function listTransactions(
-  account_id?: string,
+  account_iban?: string,
   skip = 0,
   limit = 50,
 ) {
@@ -67,7 +67,7 @@ export async function listTransactions(
   }
 
   const params = new URLSearchParams();
-  if (account_id) params.set("account_id", account_id);
+  if (account_iban) params.set("account_iban", account_iban);
   if (skip) params.set("skip", String(skip));
   if (limit) params.set("limit", String(limit));
 

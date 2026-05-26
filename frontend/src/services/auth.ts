@@ -116,7 +116,7 @@ export async function validateOrRefreshTokens(): Promise<TokenResponse | null> {
       }
 
       const newTokens = await requestJson<TokenResponse>(
-        "/api/v1/auth/refresh",
+        "/api/v1/auth/token/refresh",
         {
           method: "POST",
           jsonBody: { refresh_token: tokens.refresh_token },
