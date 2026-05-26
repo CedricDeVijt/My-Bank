@@ -1,5 +1,5 @@
 repos:
-  # General hooks for all files
+  # Generic file quality hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -7,9 +7,12 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
       - id: debug-statements
 
-  # Python/FastAPI Backend
+  # Python backend
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.4
     hooks:
@@ -17,17 +20,7 @@ repos:
         args: [--fix]
         files: ^backend/
 
-  - repo: https://github.com/psf/black
-    rev: 26.1.0
-    hooks:
-      - id: black
-        files: ^backend/
-
-  - repo: https://github.com/pycqa/isort
-    rev: 8.0.0
-    hooks:
-      - id: isort
-        args: ["--profile", "black"]
+      - id: ruff-format
         files: ^backend/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -35,22 +28,24 @@ repos:
     hooks:
       - id: mypy
         files: ^backend/
+        args: [--config-file=backend/pyproject.toml]
+        additional_dependencies:
+          - pydantic
+          - sqlalchemy
 
-  # Frontend (React/Vite/Tailwind)
+  # Frontend
   - repo: local
     hooks:
       - id: eslint
         name: eslint
         entry: bash -c 'cd frontend && npm run lint -- --fix'
         language: system
-        files: ^frontend/.*\.[jt]sx?$
         pass_filenames: false
+        files: ^frontend/.*\.[jt]sx?$
 
-  - repo: local
-    hooks:
       - id: prettier
         name: prettier
         entry: bash -c 'cd frontend && npm run format'
         language: system
-        files: ^frontend/.*\.(ts|tsx|js|jsx|css|json)$
         pass_filenames: false
+        files: ^frontend/.*\.(ts|tsx|js|jsx|css|json|md|yaml|yml)$
