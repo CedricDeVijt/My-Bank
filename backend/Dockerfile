@@ -5,20 +5,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+RUN pip install --no-cache-dir uv
+
 COPY pyproject.toml uv.lock ./
-RUN python - <<'PY'
-import subprocess
-import tomllib
-
-with open("pyproject.toml", "rb") as f:
-    data = tomllib.load(f)
-
-deps = data["project"]["dependencies"]
-subprocess.check_call(["pip", "install", "--no-cache-dir", *deps])
-PY
+RUN uv sync --frozen --no-dev
 
 COPY src ./src
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
