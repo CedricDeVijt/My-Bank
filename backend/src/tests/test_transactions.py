@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from pydantic import ValidationError
 
+from db import User
 from src.api.v1.transactions import list_transactions
 from src.core.exceptions import UnauthorizedTransactionError
 from src.schemas.Transaction import TransactionCreateRequest
@@ -135,6 +136,15 @@ class TransactionIbanTests(TestCase):
         mock_get_by_iban: MagicMock,
     ) -> None:
         account = SimpleNamespace(id=uuid.uuid4())
+        user = User(
+            id=uuid.uuid4(),
+            email="user@example.com",
+            first_name="John",
+            last_name="Doe",
+            hashed_password="fakehash",
+            date_of_birth=datetime.now(),
+        )
+
         tx = SimpleNamespace(
             id=uuid.uuid4(),
             from_account_id=uuid.uuid4(),
@@ -154,7 +164,7 @@ class TransactionIbanTests(TestCase):
             skip=0,
             limit=50,
             db=db,
-            current_user=SimpleNamespace(id=uuid.uuid4()),
+            current_user=user,
         )
 
         self.assertEqual(len(result), 1)
