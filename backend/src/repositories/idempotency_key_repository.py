@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import and_, delete, select
 from sqlalchemy.orm import Session
+
 from src.db.models import IdempotencyKey
 
 
@@ -56,4 +57,4 @@ def cleanup_expired(db: Session) -> int:
     now = datetime.now(UTC).replace(tzinfo=None)
     stmt = delete(IdempotencyKey).where(IdempotencyKey.expires_at <= now)
     result = db.execute(stmt)
-    return result.rowcount or 0
+    return int(getattr(result, "rowcount", 0) or 0)

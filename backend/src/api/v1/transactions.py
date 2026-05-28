@@ -1,6 +1,10 @@
+import uuid
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+
 from src.api.dependencies import get_current_user
 from src.core.exceptions import (
     AccountNotFoundError,
@@ -13,6 +17,7 @@ from src.core.exceptions import (
 )
 from src.core.idempotency import idempotent
 from src.db import get_db
+from src.db.models import User
 from src.repositories import account_repository
 from src.schemas.Transaction import (
     TransactionCreateRequest,
@@ -75,8 +80,8 @@ def handle_transaction_error(error: Exception) -> HTTPException:
 def create_transaction(
     payload: TransactionCreateRequest,
     request: Request,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> TransactionResponse:
     """
     Execute a money transfer between accounts.
@@ -116,25 +121,27 @@ def create_transaction(
 
     except TransactionError as e:
         db.rollback()
-        raise handle_transaction_error(e)
-    except IntegrityError:
+        raise handle_transaction_error(e) from e
+    except IntegrityError as err:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database integrity error",
-        )
-    except Exception:
+        ) from err
+    except Exception as err:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred",
-        )
+        ) from err
 
 
 @router.get(
     "", status_code=status.HTTP_200_OK, response_model=list[TransactionListResponse]
 )
 def list_transactions(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
     account_id: str | None = Query(
         None, description="Filter transactions by account ID"
     ),
@@ -143,8 +150,6 @@ def list_transactions(
     ),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(50, ge=1, le=100, description="Maximum records to return"),
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
 ) -> list[TransactionListResponse]:
     """
     Get transaction history for an account.
@@ -178,18 +183,16 @@ def list_transactions(
                 )
             account_uuid = account.id
         else:
-            import uuid
-
             # Parse account_id as UUID
             try:
                 account_uuid = uuid.UUID(account_id)
-            except ValueError:
+            except ValueError as err:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Invalid account_id format",
-                )
+                ) from err
 
-        transactions, total = transaction_service.get_account_history(
+        transactions, _total = transaction_service.get_account_history(
             db=db,
             account_id=account_uuid,
             skip=skip,
@@ -202,9 +205,9 @@ def list_transactions(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
-        )
-    except Exception:
+        ) from e
+    except Exception as err:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve transactions",
-        )
+        ) from err

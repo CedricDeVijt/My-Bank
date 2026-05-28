@@ -15,6 +15,7 @@ import uuid
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
 from src.core.exceptions import (
     AccountNotFoundError,
     CurrencyMismatchError,
@@ -153,7 +154,7 @@ def execute_transfer(
     except Exception as e:
         # If any error occurs, the database session will be rolled back
         # by the caller, leaving the accounts unchanged
-        raise InvalidTransactionError(f"Transfer failed: {str(e)}")
+        raise InvalidTransactionError(f"Transfer failed: {str(e)}") from e
 
 
 def get_account_history(
@@ -161,7 +162,7 @@ def get_account_history(
     account_id: uuid.UUID,
     skip: int = 0,
     limit: int = 50,
-) -> tuple[list, int]:
+) -> tuple[list[Transaction], int]:
     """
     Get transaction history for an account.
 

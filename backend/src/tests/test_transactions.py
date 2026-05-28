@@ -5,6 +5,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from pydantic import ValidationError
+
 from src.api.v1.transactions import list_transactions
 from src.core.exceptions import UnauthorizedTransactionError
 from src.schemas.Transaction import TransactionCreateRequest
@@ -12,7 +13,7 @@ from src.services.transaction_service import execute_transfer
 
 
 class TransactionIbanTests(TestCase):
-    def test_transaction_create_request_normalizes_ibans(self):
+    def test_transaction_create_request_normalizes_ibans(self) -> None:
         payload = TransactionCreateRequest(
             from_iban=" be12 3456 7890 1234 ",
             to_iban="be12 3456 7890 1235",
@@ -22,7 +23,7 @@ class TransactionIbanTests(TestCase):
         self.assertEqual(payload.from_iban, "BE12345678901234")
         self.assertEqual(payload.to_iban, "BE12345678901235")
 
-    def test_transaction_create_request_rejects_same_iban(self):
+    def test_transaction_create_request_rejects_same_iban(self) -> None:
         with self.assertRaises(ValidationError):
             TransactionCreateRequest(
                 from_iban="BE12345678901234",
@@ -34,9 +35,9 @@ class TransactionIbanTests(TestCase):
     @patch("src.services.transaction_service.account_repository.get_by_iban")
     def test_execute_transfer_uses_ibans_and_updates_balances(
         self,
-        mock_get_by_iban,
-        mock_create_transaction,
-    ):
+        mock_get_by_iban: MagicMock,
+        mock_create_transaction: MagicMock,
+    ) -> None:
         owner_id = uuid.uuid4()
         from_account = SimpleNamespace(
             id=uuid.uuid4(),
@@ -91,7 +92,9 @@ class TransactionIbanTests(TestCase):
         )
 
     @patch("src.services.transaction_service.account_repository.get_by_iban")
-    def test_execute_transfer_blocks_non_owner(self, mock_get_by_iban):
+    def test_execute_transfer_blocks_non_owner(
+        self, mock_get_by_iban: MagicMock
+    ) -> None:
         owner_id = uuid.uuid4()
         other_user_id = uuid.uuid4()
         from_account = SimpleNamespace(
@@ -128,9 +131,9 @@ class TransactionIbanTests(TestCase):
     @patch("src.api.v1.transactions.transaction_service.get_account_history")
     def test_list_transactions_accepts_iban_filter(
         self,
-        mock_get_account_history,
-        mock_get_by_iban,
-    ):
+        mock_get_account_history: MagicMock,
+        mock_get_by_iban: MagicMock,
+    ) -> None:
         account = SimpleNamespace(id=uuid.uuid4())
         tx = SimpleNamespace(
             id=uuid.uuid4(),

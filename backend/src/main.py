@@ -1,7 +1,10 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any, cast
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from src.api.v1.accounts import router as account_router
 from src.api.v1.auth import router as auth_router
 from src.api.v1.transactions import router as transactions_router
@@ -10,7 +13,7 @@ from src.db import init_db
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Startup
     init_db()
     yield
@@ -29,7 +32,7 @@ origins = [
 ]
 
 app.add_middleware(
-    CORSMiddleware,
+    cast(Any, CORSMiddleware),
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
@@ -38,5 +41,5 @@ app.add_middleware(
 
 
 @app.get("/")
-async def root():
+async def root() -> dict[str, str]:
     return {"message": "Hello World"}

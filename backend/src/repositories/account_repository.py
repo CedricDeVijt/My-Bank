@@ -1,7 +1,9 @@
 import uuid
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
 from src.db.models import Account
 
 
@@ -30,7 +32,7 @@ def get_by_iban(db: Session, iban: str) -> Account | None:
     return db.scalars(stmt).first()
 
 
-def create(db: Session, account_data: dict) -> Account:
+def create(db: Session, account_data: dict[str, Any]) -> Account:
     """Create a new account"""
     account = Account(**account_data)
     db.add(account)

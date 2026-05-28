@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
+from typing import Any, cast
 
 import jwt
 from pwdlib import PasswordHash
@@ -8,11 +9,11 @@ password_hash = PasswordHash.recommended()
 
 
 def hash_password(password: str) -> str:
-    return password_hash.hash(password)
+    return str(password_hash.hash(password))
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return password_hash.verify(plain_password, hashed_password)
+    return bool(password_hash.verify(plain_password, hashed_password))
 
 
 class TokenError(ValueError):
@@ -28,7 +29,7 @@ class InvalidTokenError(TokenError):
 
 
 def _create_token(
-    data: dict,
+    data: dict[str, Any],
     secret_key: str,
     expires_in: int,
     token_use: str,
@@ -41,11 +42,11 @@ def _create_token(
         "iat": now,
         "exp": now + timedelta(seconds=expires_in),
     }
-    return jwt.encode(payload, secret_key, algorithm=algorithm)
+    return str(jwt.encode(payload, secret_key, algorithm=algorithm))
 
 
 def create_access_token(
-    data: dict, secret_key: str, expires_in: int, algorithm: str = "HS256"
+    data: dict[str, Any], secret_key: str, expires_in: int, algorithm: str = "HS256"
 ) -> str:
     return _create_token(
         data, secret_key, expires_in, token_use="access", algorithm=algorithm
@@ -53,7 +54,7 @@ def create_access_token(
 
 
 def create_refresh_token(
-    data: dict, secret_key: str, expires_in: int, algorithm: str = "HS256"
+    data: dict[str, Any], secret_key: str, expires_in: int, algorithm: str = "HS256"
 ) -> str:
     return _create_token(
         data, secret_key, expires_in, token_use="refresh", algorithm=algorithm
@@ -64,11 +65,13 @@ def hash_token(token: str) -> str:
     return sha256(token.encode("utf-8")).hexdigest()
 
 
-def decode_token(token: str, secret_key: str, algorithm: str = "HS256") -> dict:
+def decode_token(
+    token: str, secret_key: str, algorithm: str = "HS256"
+) -> dict[str, Any]:
     try:
         payload = jwt.decode(token, secret_key, algorithms=[algorithm])
-        return payload
+        return cast(dict[str, Any], payload)
     except jwt.ExpiredSignatureError:
-        raise TokenExpiredError("Token has expired")
+        raise TokenExpiredError("Token has expired") from None
     except jwt.InvalidTokenError:
-        raise InvalidTokenError("Invalid token")
+        raise InvalidTokenError("Invalid token") from None

@@ -1,5 +1,8 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
+
 from src.api.dependencies import get_current_user
 from src.core.idempotency import idempotent
 from src.db import get_db
@@ -12,8 +15,9 @@ router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
 @router.get("", response_model=AccountListResponse)
 def list_accounts(
-    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
-):
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> AccountListResponse:
     accounts = account_service.list_user_accounts(db, current_user.id)
 
     return AccountListResponse(
@@ -38,8 +42,8 @@ def list_accounts(
 def create_account(
     payload: AccountCreate,
     request: Request,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> AccountResponse:
     account = account_service.create(
         db=db,

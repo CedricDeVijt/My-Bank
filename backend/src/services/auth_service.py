@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+
 from src.core.config import settings
 from src.core.exceptions import (
     AuthenticationError,

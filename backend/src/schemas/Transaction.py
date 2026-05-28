@@ -13,7 +13,7 @@ class TransactionCreateRequest(BaseModel):
 
     @field_validator("from_iban", "to_iban", mode="before")
     @classmethod
-    def normalize_iban(cls, v):
+    def normalize_iban(cls, v: object) -> object:
         if not isinstance(v, str):
             return v
 
@@ -23,7 +23,7 @@ class TransactionCreateRequest(BaseModel):
         return normalized
 
     @model_validator(mode="after")
-    def validate_different_accounts(self):
+    def validate_different_accounts(self) -> "TransactionCreateRequest":
         if self.from_iban == self.to_iban:
             raise ValueError("Cannot transfer to the same account")
         return self

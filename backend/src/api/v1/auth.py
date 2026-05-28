@@ -1,5 +1,8 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
+
 from src.api.dependencies import get_current_user
 from src.core.config import settings
 from src.core.exceptions import (
@@ -30,9 +33,12 @@ def _build_token_response(access_token: str, refresh_token: str) -> TokenRespons
     "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
 @idempotent(ttl_seconds=3600)
-def register_user(user: UserCreate, request: Request, db: Session = Depends(get_db)):
+def register_user(
+    user: UserCreate,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+) -> UserResponse:
     try:
-
         created = auth_service.register_user(payload=user, db=db)
     except EmailAlreadyRegisteredError as exc:
         raise HTTPException(
@@ -47,7 +53,9 @@ def register_user(user: UserCreate, request: Request, db: Session = Depends(get_
 @router.post("/login", response_model=TokenResponse)
 @idempotent(ttl_seconds=3600)
 def login_user(
-    credentials: UserLogin, request: Request, db: Session = Depends(get_db)
+    credentials: UserLogin,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
     # authenticate user
     try:
@@ -71,7 +79,7 @@ def login_user(
 def refresh_token(
     payload: RefreshTokenRequest,
     request: Request,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
     try:
         access_token, refresh_token = auth_service.refresh_tokens(
@@ -90,8 +98,8 @@ def refresh_token(
 def logout_user(
     payload: LogoutRequest,
     request: Request,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> Response:
     try:
         auth_service.logout(db, current_user.id, payload.refresh_token)

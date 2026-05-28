@@ -4,7 +4,7 @@ from pydantic import Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseSettings):
+class Settings(BaseSettings):  # type: ignore[misc]
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -27,7 +27,8 @@ except ValidationError as e:
     env_file = Path(".env")
     if not env_file.exists():
         raise FileNotFoundError(
-            f"Configuration Error: The required '.env' file was not found at {env_file.resolve()}\n\n"
+            "Configuration Error: The required '.env' file was not found at "
+            f"{env_file.resolve()}\n\n"
         ) from e
     else:
         raise

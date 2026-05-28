@@ -1,12 +1,14 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
+
 from src.db.models import RefreshToken
 
 
-def create(db: Session, data: dict) -> RefreshToken:
+def create(db: Session, data: dict[str, Any]) -> RefreshToken:
     token = RefreshToken(**data)
     db.add(token)
     return token

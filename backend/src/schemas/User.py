@@ -14,7 +14,7 @@ class UserCreate(BaseModel):
 
     @field_validator("first_name", "last_name", "password")
     @classmethod
-    def not_empty(cls, v):
+    def not_empty(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Field cannot be empty")
         return v.strip()

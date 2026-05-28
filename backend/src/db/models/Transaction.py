@@ -3,13 +3,14 @@ from datetime import datetime
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
+
 from src.db import Base
 
 
 class Transaction(Base):
     __tablename__ = "transaction"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid7)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     from_account_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("account.id"), nullable=False
     )

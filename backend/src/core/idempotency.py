@@ -1,17 +1,19 @@
 import json
 import uuid
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Optional
+from typing import Any
 
 from fastapi import Request
 from sqlalchemy.orm import Session
+
 from src.repositories import idempotency_key_repository
 
 
 def idempotent(
     user_id_attr: str = "id",
     ttl_seconds: int = 3600,
-) -> Callable[[Callable], Callable]:
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Decorator to make an endpoint idempotent.
 
@@ -23,12 +25,12 @@ def idempotent(
         Decorated function that handles idempotency
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Extract request and db from kwargs
-            request: Optional[Request] = kwargs.get("request")
-            db: Optional[Session] = kwargs.get("db")
+            request: Request | None = kwargs.get("request")
+            db: Session | None = kwargs.get("db")
             current_user = kwargs.get("current_user")
 
             if not request or not db:
@@ -42,11 +44,13 @@ def idempotent(
                 # If no idempotency key, just execute the function
                 return func(*args, **kwargs)
 
-            # For unauthenticated endpoints (like registration), use a hash of request body as user_id
+            # For unauthenticated endpoints (like registration), use a hash of the
+            # request path and key as the user identifier.
             if current_user:
                 user_id: uuid.UUID = getattr(current_user, user_id_attr)
             else:
-                # For unauthenticated endpoints, generate a deterministic UUID from the path and key
+                # For unauthenticated endpoints, generate a deterministic UUID from
+                # the path and key.
                 import hashlib
 
                 path_key = f"{request.method}:{request.url.path}"

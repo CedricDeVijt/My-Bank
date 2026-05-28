@@ -1,8 +1,10 @@
 import uuid
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
+
 from src.core.config import settings
 from src.core.security import InvalidTokenError, TokenExpiredError, decode_token
 from src.db import get_db
@@ -17,12 +19,14 @@ def _get_raw_token(auth_credentials: HTTPAuthorizationCredentials | None) -> str
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
-    return auth_credentials.credentials
+    return str(auth_credentials.credentials)
 
 
 def get_current_user(
-    auth_credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-    db: Session = Depends(get_db),
+    auth_credentials: Annotated[
+        HTTPAuthorizationCredentials | None, Depends(bearer_scheme)
+    ],
+    db: Annotated[Session, Depends(get_db)],
 ) -> User:
     raw_token = _get_raw_token(auth_credentials)
     try:

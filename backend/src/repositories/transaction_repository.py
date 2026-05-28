@@ -1,11 +1,13 @@
 import uuid
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
 from src.db.models import Transaction
 
 
-def create(db: Session, transaction_data: dict) -> Transaction:
+def create(db: Session, transaction_data: dict[str, Any]) -> Transaction:
     """Create a new transaction record"""
     transaction = Transaction(**transaction_data)
     db.add(transaction)

@@ -1,5 +1,8 @@
+from collections.abc import Generator
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+
 from src.core.config import settings
 from src.db.base import Base
 from src.db.models import Account, IdempotencyKey, RefreshToken, User
@@ -18,7 +21,7 @@ engine = create_engine(settings.database_url, connect_args={"check_same_thread":
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def get_db():
+def get_db() -> Generator[Session, None, None]:
     db: Session = SessionLocal()
     try:
         yield db
