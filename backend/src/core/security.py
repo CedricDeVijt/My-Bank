@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
-from typing import Any, cast
+from typing import Any
 
 import jwt
 from pwdlib import PasswordHash
@@ -70,7 +70,7 @@ def decode_token(
 ) -> dict[str, Any]:
     try:
         payload = jwt.decode(token, secret_key, algorithms=[algorithm])
-        return cast(dict[str, Any], payload)
+        return payload
     except jwt.ExpiredSignatureError:
         raise TokenExpiredError("Token has expired") from None
     except jwt.InvalidTokenError:
