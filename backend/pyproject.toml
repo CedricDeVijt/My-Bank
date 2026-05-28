@@ -47,4 +47,5 @@ ignore_missing_imports = true
 disable_error_code = ["untyped-decorator"]
 
 [tool.pytest.ini_options]
+pythonpath = ["."]
 testpaths = ["tests"]
