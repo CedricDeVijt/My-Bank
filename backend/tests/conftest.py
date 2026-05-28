@@ -4,12 +4,15 @@ from datetime import date
 from typing import Any
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, delete
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from src.db import get_db
 from src.db.base import Base
 from src.db.models import Account, User
+from src.main import app
 
 
 @pytest.fixture(scope="session")
@@ -38,6 +41,18 @@ def db_session(engine: Any) -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
+
+
+@pytest.fixture
+def client(db_session: Session) -> TestClient:
+    """Test client with overridden database dependency"""
+
+    def override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    yield TestClient(app)
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -84,3 +99,20 @@ def account_factory(
         return account
 
     return _create_account
+
+
+@pytest.fixture
+def authenticated_user_and_token(db_session: Session, user_factory) -> Any:
+    """Create an authenticated user with valid tokens"""
+    from src.services import auth_service
+
+    user = user_factory()
+    access_token, refresh_token = auth_service.issue_token_pair(db_session, user)
+    db_session.commit()
+
+    return {
+        "user": user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "headers": {"Authorization": f"Bearer {access_token}"},
+    }

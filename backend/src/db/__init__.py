@@ -15,6 +15,7 @@ __all__ = [
     "User",
     "get_db",
     "init_db",
+    "SessionLocal",
 ]
 
 engine = create_engine(settings.database_url, connect_args={"check_same_thread": False})
